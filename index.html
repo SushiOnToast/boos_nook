@@ -18,10 +18,28 @@
         <div id="hint"></div>
     </main>
 
+    <div id="diary" class="overlay" hidden>
+        <div class="book" role="dialog" aria-label="the ghost's diary">
+            <button class="close" id="diary-close" aria-label="close diary">x</button>
+            <div class="page" id="diary-page">
+                <div class="page-date" id="diary-date"></div>
+                <h2 class="page-title" id="diary-title"></h2>
+                <div class="page-art" id="diary-art"></div>
+                <p class="page-body" id="diary-body"></p>
+            </div>
+            <div class="book-nav">
+                <button id="diary-prev">&lt; prev</button>
+                <span id="diary-num"></span>
+                <button id="diary-next">next &gt;</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/candy.js"></script>
     <script src="js/room.js"></script>
     <script src="js/ghost.js"></script>
+    <script src="js/diary.js"></script>
     <script src="js/main.js"></script>
 </body>
 

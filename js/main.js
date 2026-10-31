@@ -49,7 +49,7 @@ canvas.addEventListener("click", (e) => {
 
 function handleObjectClick(id) {
   console.log("clicked:", id);
-  // interactible object logicc
+  if (id === "diary") openDiary();
 }
 
 function frame(now) {
