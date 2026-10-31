@@ -35,11 +35,39 @@
         </div>
     </div>
 
+    <div id="radio" class="overlay" hidden>
+        <div class="radio-box" role="dialog" aria-label="the ghost's radio">
+            <button class="close" id="radio-close" aria-label="close radio">x</button>
+
+            <div class="radio-display">
+                <div id="radio-name">GHOST FM</div>
+                <div id="radio-freq">103.1</div>
+                <div id="radio-mood">nostalgic indie</div>
+            </div>
+
+            <canvas id="radio-vis" width="128" height="24"></canvas>
+
+            <div class="dial">
+                <div class="dial-needle" id="radio-needle"></div>
+            </div>
+
+            <div class="radio-controls">
+                <button id="radio-prev">&lt; tune</button>
+                <button id="radio-power">power</button>
+                <button id="radio-next">tune &gt;</button>
+            </div>
+
+            <div id="radio-player"></div>
+            <p class="radio-hint" id="radio-hint"></p>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/candy.js"></script>
     <script src="js/room.js"></script>
     <script src="js/ghost.js"></script>
     <script src="js/diary.js"></script>
+    <script src="js/radio.js"></script>
     <script src="js/main.js"></script>
 </body>
 

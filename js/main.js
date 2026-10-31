@@ -48,8 +48,8 @@ canvas.addEventListener("click", (e) => {
 });
 
 function handleObjectClick(id) {
-  console.log("clicked:", id);
   if (id === "diary") openDiary();
+  if (id === "radio") openRadio();
 }
 
 function frame(now) {
