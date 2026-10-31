@@ -1,31 +1,56 @@
-const countEl = document.getElementById('count');
-const latestEl = document.getElementById('latest');
-const statusEl = document.getElementById('status');
+const canvas = document.getElementById("room");
+const ctx = canvas.getContext("2d");
+const hint = document.getElementById("hint");
+ctx.imageSmoothingEnabled = false;
 
-function render({ count, latest }) {
-  countEl.textContent = `${count} pieces of candy have been left here`;
-  if (latest[0]) {
-    const name = latest[0].candy_type.replace('_', ' ');
-    latestEl.textContent = `someone left a ${name} ${timeAgo(latest[0].created_at)}.`;
-  }
+// Scale the canvas by a whole number so pixels stay sharp
+function fitCanvas() {
+  const scale = Math.max(
+    1,
+    Math.floor(Math.min(window.innerWidth / W, (window.innerHeight - 60) / H)),
+  );
+  canvas.style.width = W * scale + "px";
+  canvas.style.height = H * scale + "px";
+}
+window.addEventListener("resize", fitCanvas);
+fitCanvas();
+
+// Convert mouse position (screen px) to room position (logical px)
+function toLogical(e) {
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) * (W / r.width),
+    y: (e.clientY - r.top) * (H / r.height),
+  };
 }
 
-async function refresh() {
-  try { render(await loadBasket()); }
-  catch (e) { countEl.textContent = 'the basket is hiding…'; console.error(e); }
-}
+let hovered = null;
 
-document.querySelectorAll('[data-candy]').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    try {
-      await leaveCandy(btn.dataset.candy);
-      statusEl.textContent = 'thank you for being so sweet ♡';
-    } catch (e) {
-      statusEl.textContent = 'slow down!!';
-      console.error(e);
-    }
-  });
+canvas.addEventListener("pointermove", (e) => {
+  const p = toLogical(e);
+  hovered = hitTest(p.x, p.y);
+  canvas.style.cursor = hovered ? "pointer" : "default";
+  hint.textContent = hovered ? hovered.label : "";
 });
 
-refresh();
-subscribeToCandy(() => refresh());
+canvas.addEventListener("pointerleave", () => {
+  hovered = null;
+  hint.textContent = "";
+});
+
+canvas.addEventListener("click", (e) => {
+  const p = toLogical(e);
+  const obj = hitTest(p.x, p.y);
+  if (obj) handleObjectClick(obj.id);
+});
+
+function handleObjectClick(id) {
+  console.log("clicked:", id);
+  // interactible object logicc
+}
+
+function frame() {
+  drawRoom(ctx, hovered);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
