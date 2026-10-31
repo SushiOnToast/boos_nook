@@ -1,10 +1,10 @@
 // ghost state
 const ghost = {
-  x: 120,
+    x: 96,
   y: 80, // centre of ghost
-  homeX: 120,
+  homeX: 96,
   homeY: 80,
-  targetX: 120, // target location where its going to
+  targetX: 96, // target location where its going to
   targetY: 80,
   state: "idle", // idle,  happy,  sleepy,  surprised,  waving
   stateUntil: 0, // timestamp when a timed state ends
@@ -37,7 +37,7 @@ const LINES = {
   surprised: ["eek!!!", "oh! you startled me", "boo? ...wait, that's my job"],
   waving: ["a visitor!", "hello, hello", "welcome to my room"],
   sleepy: ["*yawn*", "zzz...", "so sleepy..."],
-  watching: ["leaving already?", "bye..."],
+  watching: ["leaving already?", "bye...", "i'm still here :("],
 };
 
 // helper function: pick random item from array
@@ -58,12 +58,11 @@ function setState(state, durationMs = 0, line = null) {
   if (line) say(line);
 }
 
-// choose somewhere new to float to (at least 50px away, so it never hops on the spot)
 function pickNewTarget() {
   for (let i = 0; i < 10; i++) {
-    const x = 40 + Math.random() * (W - 80);
-    const y = 50 + Math.random() * (H - 90);
-    if (Math.hypot(x - ghost.x, y - ghost.y) > 50) {
+    const x = 24 + Math.random() * (W - 48);
+    const y = 44 + Math.random() * (H - 68);
+    if (Math.hypot(x - ghost.x, y - ghost.y) > 40) {
       ghost.targetX = x;
       ghost.targetY = y;
       return;

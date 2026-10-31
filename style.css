@@ -4,7 +4,7 @@ body {
     height: 100%;
     background: #171326;
     color: #A99ACF;
-    font-family: monospace;
+    font-family: "Tiny5", monospace;
 }
 
 #stage {
@@ -24,8 +24,42 @@ body {
 
 #hint {
     height: 1.2em;
-    font-size: 14px;
+    font-family: "Tiny5", monospace;
+    font-size: 16px;
     letter-spacing: 1px;
+    color: #A99ACF;
+}
+
+#title {
+    text-align: center;
+    font-family: "Tiny5", monospace;
+}
+
+#title h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: normal;
+    letter-spacing: 2px;
+    color: #F4EFFB;
+}
+
+#title p {
+    margin: 4px 0 0;
+    font-size: 16px;
+    color: #A99ACF;
+}
+
+#credit {
+    position: fixed;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: "Tiny5", monospace;
+    font-size: 12px;
+    color: #A99ACF;
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 /* diary */
@@ -35,9 +69,15 @@ body {
     inset: 0;
     background: rgba(23, 19, 38, 0.82);
     display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 20px 12px;
+    box-sizing: border-box;
+    overflow-y: auto;
     z-index: 20;
+}
+
+.overlay>* {
+    margin: auto;
+    /* centres when it fits, scrolls when it doesn't */
 }
 
 .overlay[hidden] {
@@ -230,181 +270,215 @@ body {
 
 /* ---------- candy basket ---------- */
 .candy-box {
-  /* colours: change them here and everything updates */
-  --card: #D99DB8;        /* default card background */
-  --card-hover: #e4b0c6;  /* hovering a candy in the picker */
-  --card-ink: #171326;    /* text on cards */
-  --pick: #F3EAD3;        /* the candy you've selected */
-  --pick-ring: #F4EFFB;   /* outline around the selected candy */
-  --mine: #A99ACF;        /* your own candy in the gallery ("you") */
+    /* colours: change them here and everything updates */
+    --card: #D99DB8;
+    /* default card background */
+    --card-hover: #e4b0c6;
+    /* hovering a candy in the picker */
+    --card-ink: #171326;
+    /* text on cards */
+    --pick: #F3EAD3;
+    /* the candy you've selected */
+    --pick-ring: #F4EFFB;
+    /* outline around the selected candy */
+    --mine: #A99ACF;
+    /* your own candy in the gallery ("you") */
 
-  position: relative;
-  width: min(460px, 92vw);
-  background: #443858;
-  padding: 18px;
-  box-sizing: border-box;
-  box-shadow: 0 0 0 4px #28213F, 0 0 50px rgba(169, 154, 207, 0.2);
-  font-family: "Tiny5", monospace;
-  color: #A99ACF;
+    position: relative;
+    width: min(460px, 92vw);
+    background: #443858;
+    padding: 18px;
+    box-sizing: border-box;
+    box-shadow: 0 0 0 4px #28213F, 0 0 50px rgba(169, 154, 207, 0.2);
+    font-family: "Tiny5", monospace;
+    color: #A99ACF;
 }
 
 .candy-title {
-  margin: 0 0 8px;
-  font-size: 24px;
-  font-weight: normal;
-  color: #F4EFFB;
-}
-#candy-count {
-  margin: 0;
-  font-size: 18px;
-  color: #F4EFFB;
-}
-#candy-latest {
-  margin: 2px 0 10px;
-  font-size: 14px;
-  min-height: 1.2em;
-}
-.candy-sub {
-  margin: 14px 0 6px;
-  font-size: 14px;
+    margin: 0 0 8px;
+    font-size: 24px;
+    font-weight: normal;
+    color: #F4EFFB;
 }
 
-/* every candy left so far */
+#candy-count {
+    margin: 0;
+    font-size: 18px;
+    color: #F4EFFB;
+}
+
+#candy-latest {
+    margin: 2px 0 10px;
+    font-size: 14px;
+    min-height: 1.2em;
+}
+
+.candy-sub {
+    margin: 14px 0 6px;
+    font-size: 14px;
+}
+
 #candy-gallery {
-  background: #28213F;
-  padding: 8px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
-  gap: 6px;
-  max-height: 150px;
-  overflow-y: auto;
+    background: #28213F;
+    padding: 8px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #D99DB8 #28213F;
 }
+
 .candy-empty {
-  grid-column: 1 / -1;
-  padding: 14px 0;
-  text-align: center;
-  font-size: 14px;
+    width: 100%;
+    padding: 14px 0;
+    text-align: center;
+    font-size: 14px;
 }
+
 .candy-card {
-  background: var(--card);
-  color: var(--card-ink);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 2px 5px;
-  font-size: 12px;
-  line-height: 1.1;
-  text-align: center;
+    background: var(--card);
+    color: var(--card-ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 2px 5px;
+    font-size: 12px;
+    line-height: 1.1;
+    text-align: center;
+    flex: 0 0 74px;
+
 }
+
 .candy-card span {
-  max-width: 100%;
-  overflow-wrap: anywhere;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
+
 .candy-card.mine {
-  background: var(--mine);
+    background: var(--mine);
 }
 
 /* candy image */
 .thumb {
-  display: block;
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  image-rendering: pixelated;
+    display: block;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 /* the picker */
 #candy-picker {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
 }
+
 .candy-opt {
-  font-family: "Tiny5", monospace;
-  font-size: 14px;
-  background: var(--card);
-  color: var(--card-ink);
-  border: 0;
-  padding: 8px 4px 6px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+    font-family: "Tiny5", monospace;
+    font-size: 14px;
+    background: var(--card);
+    color: var(--card-ink);
+    border: 0;
+    padding: 8px 4px 6px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
+
 .candy-opt .thumb {
-  width: 48px;
-  height: 48px;
+    width: 48px;
+    height: 48px;
 }
+
 .candy-opt:hover {
-  background: var(--card-hover);
+    background: var(--card-hover);
 }
+
 .candy-opt.sel {
-  background: var(--pick);
-  box-shadow: 0 0 0 3px var(--pick-ring);
+    background: var(--pick);
+    box-shadow: 0 0 0 3px var(--pick-ring);
+}
+
+.candy-opt .tally {
+    font-size: 12px;
+    opacity: 0.7;
 }
 
 /* visitor name + reroll */
 .candy-you {
-  margin: 12px 0 0;
-  font-size: 14px;
-  text-align: center;
+    margin: 12px 0 0;
+    font-size: 14px;
+    text-align: center;
 }
+
 .candy-you b {
-  font-weight: normal;
-  color: #F4EFFB;
+    font-weight: normal;
+    color: #F4EFFB;
 }
+
 #candy-reroll {
-  font-family: "Tiny5", monospace;
-  font-size: 12px;
-  background: #28213F;
-  color: #A99ACF;
-  border: 0;
-  padding: 2px 8px;
-  margin-left: 6px;
-  cursor: pointer;
+    font-family: "Tiny5", monospace;
+    font-size: 12px;
+    background: #28213F;
+    color: #A99ACF;
+    border: 0;
+    padding: 2px 8px;
+    margin-left: 6px;
+    cursor: pointer;
 }
+
 #candy-reroll:hover {
-  background: var(--card);
-  color: var(--card-ink);
+    background: var(--card);
+    color: var(--card-ink);
 }
 
 /* leave button + status */
 #candy-leave {
-  width: 100%;
-  margin-top: 10px;
-  font-family: "Tiny5", monospace;
-  font-size: 18px;
-  background: var(--card);
-  color: var(--card-ink);
-  border: 0;
-  padding: 10px 0;
-  cursor: pointer;
-}
-#candy-leave:hover:not(:disabled) {
-  background: var(--card-hover);
-}
-#candy-leave:disabled {
-  background: #28213F;
-  color: #6b5a82;
-  cursor: default;
-}
-#candy-status {
-  margin: 10px 0 0;
-  text-align: center;
-  font-size: 14px;
-  min-height: 1.2em;
-  color: #F4EFFB;
+    width: 100%;
+    margin-top: 10px;
+    font-family: "Tiny5", monospace;
+    font-size: 18px;
+    background: var(--card);
+    color: var(--card-ink);
+    border: 0;
+    padding: 10px 0;
+    cursor: pointer;
 }
 
-/* shorter screens: shrink so the window still fits */
+#candy-leave:hover:not(:disabled) {
+    background: var(--card-hover);
+}
+
+#candy-leave:disabled {
+    background: #28213F;
+    color: #6b5a82;
+    cursor: default;
+}
+
+#candy-status {
+    margin: 10px 0 0;
+    text-align: center;
+    font-size: 14px;
+    min-height: 1.2em;
+    color: #F4EFFB;
+}
+
+
+#radio-ghost {
+    margin: 8px 0 0;
+    min-height: 1.2em;
+    text-align: center;
+    font-size: 14px;
+    color: #D99DB8;
+}
+
 @media (max-height: 700px) {
-  #candy-gallery {
-    max-height: 96px;
-  }
-  .candy-opt .thumb {
-    width: 36px;
-    height: 36px;
-  }
+    .candy-opt .thumb {
+        width: 36px;
+        height: 36px;
+    }
 }

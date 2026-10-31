@@ -1,7 +1,3 @@
-// ---- Stations ----
-// The playlist IDs below are Spotify's own playlists, used as stand-ins.
-// To use yours: open a playlist in Spotify > Share > Copy link.
-// The ID is the part after /playlist/ and before the "?".
 const STATIONS = [
   {
     name: "GHOST FM",
@@ -9,36 +5,31 @@ const STATIONS = [
     mood: "nostalgic indie",
     playlist: "5Rdaq9DMjCKt3Gh7NzLmTX",
   },
-//   {
-//     name: "AFTER HOURS",
-//     freq: 94.7,
-//     mood: "dreamy and melancholic",
-//     playlist: "37i9dQZF1DX3Ogo9pFvBkY",
-//   },
-//   {
-//     name: "THE VOID",
-//     freq: 88.3,
-//     mood: "eerie ambient sounds",
-//     playlist: "37i9dQZF1DWZd79rJ6a7lp",
-//   },
-//   {
-//     name: "BEDTIME RADIO",
-//     freq: 107.9,
-//     mood: "soft, cozy instrumentals",
-//     playlist: "37i9dQZF1DX4sWSpwq3LiO",
-//   },
 ];
 
 const RADIO_LINES_ON = [
   "ooh, i love this one",
   "turn it up. wait, you can't.",
   "my favourite station!",
+  "oh! it's my song!",
+  "this is what i listen to at 3am.",
+  "gerald loves this one too.",
 ];
-const RADIO_LINES_TUNE = [
-  "ooh, i like this one",
-  "careful with the dial!",
-  "that's Gerald's favourite",
+const RADIO_LINES_OFF = [
+  "aww. i was listening to that.",
+  "silence. my old friend.",
+  "...it's quiet now.",
 ];
+const RADIO_LINES_LEFT_ON = [
+  "you left it on! thank you.",
+  "i'd turn it down, but i have no hands.",
+  "the music follows me around the room.",
+];
+// const RADIO_LINES_TUNE = [
+//   "ooh, i like this one",
+//   "careful with the dial!",
+//   "that's Gerald's favourite",
+// ];
 
 // ---- Elements ----
 const radioEl = document.getElementById("radio");
@@ -58,6 +49,7 @@ let radioOn = false;
 let stationIdx = 0;
 let staticUntil = 0; // timestamp: while now < this, show static
 let loadTimer = null;
+let pendingRadioLine = null; // what the ghost says once you close the radio
 
 // ---- Display ----
 function renderStation(now = performance.now()) {
@@ -90,11 +82,11 @@ function loadPlayer() {
   radioPlayerEl.appendChild(iframe);
 }
 
-// brief burst of static, then show/load the new station
+// brief burst of static, then show/load the station
 function staticBurst(ms = 700) {
   staticUntil = performance.now() + ms;
   renderStation();
-  radioPlayerEl.innerHTML = ""; // cut the music while "tuning"
+  radioPlayerEl.innerHTML = ""; // cut the music during the static
   clearTimeout(loadTimer);
   loadTimer = setTimeout(() => {
     renderStation();
@@ -102,34 +94,33 @@ function staticBurst(ms = 700) {
   }, ms);
 }
 
-function tune(delta) {
-  stationIdx = (stationIdx + delta + STATIONS.length) % STATIONS.length;
-  if (radioOn) {
-    staticBurst();
-    if (Math.random() < 0.3) ghostSay(pick(RADIO_LINES_TUNE), 2500);
-  } else {
-    renderStation(); // tuning while off just moves the needle
-  }
-}
+// ---- Tuning (disabled while there's only one station) ----
+// function tune(delta) {
+//   stationIdx = (stationIdx + delta + STATIONS.length) % STATIONS.length;
+//   if (radioOn) {
+//     staticBurst();
+//   } else {
+//     renderStation(); // tuning while off just moves the needle
+//   }
+// }
 
 function togglePower() {
   radioOn = !radioOn;
   renderPower();
   if (radioOn) {
     staticBurst(500);
-    ghostSay(pick(RADIO_LINES_ON), 2500);
+    pendingRadioLine = pick(RADIO_LINES_ON); // said when you close the radio
   } else {
     clearTimeout(loadTimer);
     loadPlayer(); // radioOn is false, so this just empties the player
+    pendingRadioLine = pick(RADIO_LINES_OFF);
   }
 }
 
-// ---- Open / close ----
-// Closing the window does NOT stop the music: the iframe stays in the page,
-// just hidden. Only "power: off" stops it.
 function openRadio() {
   radioOpen = true;
   ghost.cursor = null;
+  pendingRadioLine = null;
   renderStation();
   renderPower();
   radioEl.hidden = false;
@@ -143,6 +134,14 @@ function closeRadio() {
   if (!radioOpen) return;
   radioOpen = false;
   radioEl.hidden = true;
+
+  // the ghost speaks now that the room is visible again
+  let line = pendingRadioLine;
+  pendingRadioLine = null;
+  if (!line && radioOn && Math.random() < 0.5) {
+    line = pick(RADIO_LINES_LEFT_ON); // music still playing, you walked away
+  }
+  if (line) setTimeout(() => ghostSay(line, 3500), 300);
 }
 
 // ---- Visualiser (simulated bars) ----
@@ -187,8 +186,8 @@ function drawVis(now) {
 }
 
 // ---- Controls ----
-document.getElementById("radio-prev").addEventListener("click", () => tune(-1));
-document.getElementById("radio-next").addEventListener("click", () => tune(1));
+// document.getElementById("radio-prev").addEventListener("click", () => tune(-1));
+// document.getElementById("radio-next").addEventListener("click", () => tune(1));
 radioPowerBtn.addEventListener("click", togglePower);
 document.getElementById("radio-close").addEventListener("click", closeRadio);
 
@@ -199,8 +198,8 @@ radioEl.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (!radioOpen) return;
   if (e.key === "Escape") closeRadio();
-  if (e.key === "ArrowRight") tune(1);
-  if (e.key === "ArrowLeft") tune(-1);
+  // if (e.key === "ArrowRight") tune(1);
+  // if (e.key === "ArrowLeft") tune(-1);
 });
 
 renderStation();

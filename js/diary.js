@@ -15,7 +15,7 @@ const DIARY = [
   {
     date: "October 24",
     title: "I have no reflection",
-    text: "Checked the mirror again today. Nothing. I waved at it for ten minutes in case it was shy. Still nothing. Rude.",
+    text: "Checked the mirror again today. Nothing. I waved at it for ten minutes in case it was shy.",
   },
   {
     date: "October 25",
@@ -30,12 +30,12 @@ const DIARY = [
   {
     date: "October 27",
     title: "My favourite cloud",
-    text: "There's a cloud outside shaped like a slightly worried duck. I've named him Gerald. He's been there three nights now. I think we're friends.",
+    text: "There's a cloud outside shaped like a wonky donut. I've named him Gerald. He's been there three nights now. I think we're friends.",
   },
   {
     date: "October 28",
     title: "A self-portrait",
-    text: "Since I have no reflection I drew myself from memory. Everyone says it's a good likeness.",
+    text: "Since I have no reflection I drew myself from memory. Everyone says it looks just like me!!!",
     art: pixelArt([
       "....######....",
       "...#......#...",
@@ -62,7 +62,7 @@ const DIARY = [
   {
     date: "October 30",
     title: "Someone left candy",
-    text: "There was a sweet in my basket this morning. I didn't put it there. Then another one. Then another. I think the rectangle people are sneaking them in. I can't eat them (hands, remember) but I've been counting. Very sweet. Very mysterious.",
+    text: "There was a sweet in my basket this morning. I didn't put it there. Then another one. Then another. I think the rectangle people are sneaking them in. I can't eat them but I've been counting :).",
   },
   {
     date: "October 31",

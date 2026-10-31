@@ -1,6 +1,3 @@
-// ---- The treats ----
-// color = placeholder used only if assets/candy/<id>.png is missing
-// reaction = which ghost state it triggers
 const CANDIES = [
   {
     id: "cherry",
@@ -8,8 +5,8 @@ const CANDIES = [
     reaction: "surprised",
     lines: [
       "a cherry?! ...is someone chasing me?",
-      "wakka wakka... oh no.",
-      "this is how it starts. first the cherry...",
+      "i feel funny...",
+      "i think the yellow man will come now...",
     ],
   },
   {
@@ -17,8 +14,8 @@ const CANDIES = [
     name: "orange",
     reaction: "happy",
     lines: [
-      "an orange. basically a tiny pumpkin.",
-      "a healthy one! i respect the bravery.",
+      "just tell me you didn't have any sweets",
+      "a healthy one...",
       "vitamin c! i have no use for it. thank you!",
     ],
   },
@@ -59,12 +56,12 @@ const CANDIES = [
     lines: [
       "candy corn. ...classic.",
       "meh. i mean, thank you!",
-      "everyone hates candy corn. i don't. i'm brave.",
+      "...wonderful",
     ],
   },
 ];
 
-const COOLDOWN_MS = 60 * 1000; // keep in sync with the SQL trigger interval
+const COOLDOWN_MS = 10 * 60 * 1000;
 
 const CANDY_BY_ID = {};
 CANDIES.forEach((c) => {
@@ -81,14 +78,12 @@ function candyThumb(id) {
   img.className = "thumb";
   return img;
 }
-// ---- State ----
-const basketState = { count: null, latest: [], error: false };
+const basketState = { count: null, latest: [], totals: {}, error: false };
 let candyOpen = false;
 let selectedCandy = null;
 let candyLeaving = false;
 let candyTick = null;
 
-// ---- Elements ----
 const candyEl = document.getElementById("candy");
 const candyCountEl = document.getElementById("candy-count");
 const candyLatestEl = document.getElementById("candy-latest");
@@ -98,14 +93,12 @@ const candyLeaveBtn = document.getElementById("candy-leave");
 const candyStatusEl = document.getElementById("candy-status");
 const candyMyNameEl = document.getElementById("candy-myname");
 
-// ---- Helpers ----
 function candyPhrase(id) {
   const c = CANDY_BY_ID[id];
   const n = c ? c.name : "treat";
   return (/^[aeiou]/i.test(n) ? "an " : "a ") + n;
 }
 
-// "sleepy moth", or "someone" for old rows without a name
 function rowName(row) {
   return row.name_adj && row.name_noun
     ? `${row.name_adj} ${row.name_noun}`
@@ -131,18 +124,28 @@ function startCooldown() {
   } catch (e) {}
 }
 
-// ---- Data ----
 async function refreshBasket() {
   try {
-    const { count, latest } = await loadBasket(30);
+    const [{ count, latest }, totals] = await Promise.all([
+      loadBasket(15),
+      loadTotals().catch(() => ({})), // if this fails, just hide the tallies
+    ]);
     basketState.count = count;
     basketState.latest = latest;
+    basketState.totals = totals;
     basketState.error = false;
   } catch (e) {
     basketState.error = true;
     console.error(e);
   }
   renderCandyWindow();
+}
+
+// batch bursts of live updates into one reload
+let refreshTimer = null;
+function refreshBasketSoon() {
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(refreshBasket, 1500);
 }
 
 // ---- Rendering ----
@@ -174,6 +177,13 @@ function renderPicker() {
   });
 }
 
+function renderTallies() {
+  candyPickerEl.querySelectorAll(".candy-opt").forEach((btn) => {
+    const n = basketState.totals[btn.dataset.candy] || 0;
+    btn.querySelector(".tally").textContent = "x" + n.toLocaleString();
+  });
+}
+
 function markSelected() {
   candyPickerEl.querySelectorAll(".candy-opt").forEach((btn) => {
     btn.classList.toggle("sel", btn.dataset.candy === selectedCandy);
@@ -187,7 +197,7 @@ function updateLeaveButton() {
     candyLeaveBtn.textContent = "leaving...";
   } else if (left > 0) {
     candyLeaveBtn.disabled = true;
-    candyLeaveBtn.textContent = `the ghost is full (${Math.ceil(left / 1000)}s)`;
+    candyLeaveBtn.textContent = `i'm full!! (${Math.ceil(left / 1000)}s)`;
   } else {
     candyLeaveBtn.disabled = !selectedCandy;
     candyLeaveBtn.textContent = "leave a treat";
@@ -216,6 +226,7 @@ function renderCandyWindow() {
     }
   }
   renderGallery();
+  renderTallies();
   updateLeaveButton();
 }
 
@@ -271,9 +282,9 @@ async function onLeaveClick() {
     console.error(e);
     if (String(e.message || "").includes("slow down")) {
       startCooldown();
-      candyStatusEl.textContent = "the ghost says: slow down a little.";
+      candyStatusEl.textContent = "slow down!!!";
     } else {
-      candyStatusEl.textContent = "the basket wobbled. try again?";
+      candyStatusEl.textContent = "the basket ate the candy. try again?";
     }
   }
   candyLeaving = false;
@@ -289,7 +300,9 @@ CANDIES.forEach((c) => {
   slot.className = "slot";
   const label = document.createElement("span");
   label.textContent = c.name;
-  btn.append(slot, label);
+  const tally = document.createElement("span");
+  tally.className = "tally";
+  btn.append(slot, label, tally);
   btn.addEventListener("click", () => {
     selectedCandy = c.id;
     candyStatusEl.textContent = "";
@@ -316,7 +329,7 @@ document.addEventListener("keydown", (e) => {
 // ---- Live updates ----
 refreshBasket();
 subscribeToCandy((row) => {
-  refreshBasket();
+  refreshBasketSoon();
   // if it was someone else, the ghost sometimes mentions it
   if (
     row.visitor_id !== getVisitorId() &&

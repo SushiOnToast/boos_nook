@@ -58,7 +58,6 @@ function timeAgo(iso) {
   return `${hrs} hour${hrs === 1 ? "" : "s"} ago`;
 }
 
-// ---- Generated visitor names (must match the SQL lists exactly) ----
 const NAME_ADJ = ['sleepy','shy','tiny','midnight','dusty','gentle','curious','moonlit','mellow','sneaky'];
 const NAME_NOUN = ['moth','owl','lantern','cat','raven','cloud','bat','pumpkin','spider','sock'];
 
@@ -86,4 +85,12 @@ function rememberMyCandy(id) {
   const ids = getMyCandyIds();
   ids.push(id);
   try { localStorage.setItem('lh_my_candy', JSON.stringify(ids.slice(-100))); } catch (e) {}
+}
+
+async function loadTotals() {
+  const { data, error } = await db.rpc('candy_totals');
+  if (error) throw error;
+  const totals = {};
+  data.forEach((r) => (totals[r.kind] = Number(r.n)));
+  return totals;
 }

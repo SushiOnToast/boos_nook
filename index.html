@@ -14,9 +14,14 @@
 
 <body>
     <main id="stage">
+        <header id="title">
+            <p>keep our little ghost company :)</p>
+        </header>
         <canvas id="room" width="256" height="192"></canvas>
         <div id="hint"></div>
     </main>
+
+    <footer id="credit">inspo: "Oh Klahoma" by Jack Stauber</footer>
 
     <div id="diary" class="overlay" hidden>
         <div class="book" role="dialog" aria-label="the ghost's diary">
@@ -52,13 +57,14 @@
             </div>
 
             <div class="radio-controls">
-                <button id="radio-prev">&lt; tune</button>
+                <!-- <button id="radio-prev">&lt; tune</button> -->
                 <button id="radio-power">power</button>
-                <button id="radio-next">tune &gt;</button>
+                <!-- <button id="radio-next">tune &gt;</button> -->
             </div>
 
             <div id="radio-player"></div>
             <p class="radio-hint" id="radio-hint"></p>
+            <p id="radio-ghost"></p>
         </div>
     </div>
 
@@ -68,6 +74,7 @@
             <h2 class="candy-title">the candy basket</h2>
             <p id="candy-count"></p>
             <p id="candy-latest"></p>
+            <p class="candy-sub">recently left:</p>
             <div id="candy-gallery"></div>
             <p class="candy-sub">pick a treat to leave behind:</p>
             <div id="candy-picker"></div>
@@ -81,6 +88,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/candy.js"></script>
     <script src="js/room.js"></script>
+    <script src="js/sky.js"></script>
+    <script src="js/particles.js"></script>
     <script src="js/ghost.js"></script>
     <script src="js/diary.js"></script>
     <script src="js/radio.js"></script>
