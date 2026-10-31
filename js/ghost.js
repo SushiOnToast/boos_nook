@@ -29,7 +29,7 @@ const ghost = {
   lastUpdate: 0,
 };
 
-const GHOST_R = 10; // body radius for placeholder drawing
+const GHOST_R = 8; // body radius for placeholder drawing
 const GHOST_SPEED = 16; // logical pixels per second (try 10-25)
 
 const LINES = {
@@ -237,7 +237,7 @@ function drawGhost(ctx, now) {
   // Soft shadow on floor
   ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.beginPath();
-  ctx.ellipse(cx, ghost.y + GHOST_R + 8, GHOST_R * 0.8, 2, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, ghost.y + GHOST_R + 5, GHOST_R * 0.8, 2, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // body
@@ -249,7 +249,7 @@ function drawGhost(ctx, now) {
     ww = (GHOST_R * 2) / waves;
   for (let i = 0; i < waves; i++) {
     const x1 = cx + GHOST_R - i * ww;
-    const dir = i % 2 === 0 ? 3 : -1; // makes the wavy pattern
+    const dir = i % 2 === 0 ? 2 : -1; // makes the wavy pattern
     ctx.quadraticCurveTo(
       x1 - ww / 2,
       cy + GHOST_R + dir,
@@ -260,12 +260,14 @@ function drawGhost(ctx, now) {
   ctx.closePath();
   ctx.fill();
 
-  // Eyes
-  const eyeY = cy - 2;
+  // Eyes (positions come from the ghost's size, so changing GHOST_R rescales them)
+  const eyeDX = Math.round(GHOST_R * 0.4); // distance of each eye from the centre
+  const eyeY = cy - Math.round(GHOST_R * 0.2);
+  const reach = GHOST_R * 0.15; // how far the pupils slide when looking around
   const blinking = now < ghost.blinkUntil;
   const closed = blinking || ghost.state === "sleepy";
   ctx.fillStyle = "#171326";
-  for (const ex of [cx - 4, cx + 4]) {
+  for (const ex of [cx - eyeDX, cx + eyeDX]) {
     if (closed) {
       ctx.fillRect(ex - 2, eyeY, 4, 1); // 4x1 line
     } else if (ghost.state === "surprised") {
@@ -277,8 +279,8 @@ function drawGhost(ctx, now) {
       ctx.fillRect(ex + 1, eyeY, 1, 1);
     } else {
       ctx.fillRect(
-        ex - 1 + Math.round(ghost.lookX * 1.5),
-        eyeY - 1 + Math.round(ghost.lookY * 1.5),
+        ex - 1 + Math.round(ghost.lookX * reach),
+        eyeY - 1 + Math.round(ghost.lookY * reach),
         2,
         3,
       );
@@ -288,8 +290,8 @@ function drawGhost(ctx, now) {
   // Cheeks when happy
   if (ghost.state === "happy") {
     ctx.fillStyle = "#D99DB8";
-    ctx.fillRect(cx - 8, eyeY + 3, 3, 2);
-    ctx.fillRect(cx + 5, eyeY + 3, 3, 2);
+    ctx.fillRect(cx - eyeDX - 3, eyeY + 3, 2, 2);
+    ctx.fillRect(cx + eyeDX + 1, eyeY + 3, 2, 2);
   }
 
   // Speech bubble (HTML overlay, so the text is crisp instead of pixelated)
@@ -304,7 +306,7 @@ function getBubble() {
   if (bubbleEl) return bubbleEl;
 
   const style = document.createElement("style");
-    style.textContent = `
+  style.textContent = `
     #ghost-bubble {
       position: fixed;
       transform: translate(-50%, -100%);
@@ -351,7 +353,7 @@ function updateBubble(cx, cy) {
   const scale = r.width / W; // screen pixels per logical pixel
 
   if (el.textContent !== ghost.speech) el.textContent = ghost.speech;
-  el.style.setProperty("--px", scale + "px"); 
+  el.style.setProperty("--px", scale + "px");
   el.style.fontSize = Math.round(scale * 8) + "px";
   el.style.opacity = 1;
 
