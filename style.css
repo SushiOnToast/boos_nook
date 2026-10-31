@@ -228,3 +228,107 @@ body {
     text-align: center;
 }
 
+/* ---------- candy basket ---------- */
+.candy-box {
+    position: relative;
+    width: min(440px, 92vw);
+    background: #443858;
+    padding: 18px;
+    box-sizing: border-box;
+    box-shadow: 0 0 0 4px #28213F, 0 0 50px rgba(169, 154, 207, 0.2);
+    font-family: "Tiny5", monospace;
+    color: #A99ACF;
+}
+
+.candy-title {
+    margin: 0 0 8px;
+    font-size: 24px;
+    font-weight: normal;
+    color: #F4EFFB;
+}
+
+#candy-count {
+    margin: 0;
+    font-size: 18px;
+    color: #F4EFFB;
+}
+
+#candy-latest {
+    margin: 2px 0 10px;
+    font-size: 14px;
+    min-height: 1.2em;
+}
+
+#candy-pile {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #171326;
+    image-rendering: pixelated;
+}
+
+.candy-sub {
+    margin: 14px 0 6px;
+    font-size: 14px;
+}
+
+#candy-picker {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.candy-opt {
+    font-family: "Tiny5", monospace;
+    font-size: 14px;
+    background: #28213F;
+    color: #F4EFFB;
+    border: 0;
+    padding: 8px 4px 6px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.candy-opt canvas {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+}
+
+.candy-opt:hover {
+    background: #3a2f55;
+}
+
+.candy-opt.sel {
+    background: #D99DB8;
+    color: #171326;
+}
+
+#candy-leave {
+    width: 100%;
+    margin-top: 12px;
+    font-family: "Tiny5", monospace;
+    font-size: 18px;
+    background: #D99DB8;
+    color: #171326;
+    border: 0;
+    padding: 10px 0;
+    cursor: pointer;
+}
+
+#candy-leave:disabled {
+    background: #28213F;
+    color: #6b5a82;
+    cursor: default;
+}
+
+#candy-status {
+    margin: 10px 0 0;
+    text-align: center;
+    font-size: 14px;
+    min-height: 1.2em;
+    color: #F4EFFB;
+}

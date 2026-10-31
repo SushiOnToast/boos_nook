@@ -124,6 +124,7 @@ function drawRoom(ctx, hovered, now) {
   ctx.clearRect(0, 0, W, H);
   drawTiles(ctx);
   drawObjects(ctx, hovered);
+  drawBasketCandy(ctx);
   drawGhost(ctx, now);
 }
 

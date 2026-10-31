@@ -50,6 +50,7 @@ canvas.addEventListener("click", (e) => {
 function handleObjectClick(id) {
   if (id === "diary") openDiary();
   if (id === "radio") openRadio();
+  if (id === "basket") openCandy();
 }
 
 function frame(now) {

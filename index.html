@@ -62,12 +62,27 @@
         </div>
     </div>
 
+    <div id="candy" class="overlay" hidden>
+        <div class="candy-box" role="dialog" aria-label="the candy basket">
+            <button class="close" id="candy-close" aria-label="close basket">x</button>
+            <h2 class="candy-title">the candy basket</h2>
+            <p id="candy-count"></p>
+            <p id="candy-latest"></p>
+            <canvas id="candy-pile" width="128" height="40"></canvas>
+            <p class="candy-sub">pick a treat to leave behind:</p>
+            <div id="candy-picker"></div>
+            <button id="candy-leave" disabled>leave a treat</button>
+            <p id="candy-status"></p>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/candy.js"></script>
     <script src="js/room.js"></script>
     <script src="js/ghost.js"></script>
     <script src="js/diary.js"></script>
     <script src="js/radio.js"></script>
+    <script src="js/candy_ui.js"></script>
     <script src="js/main.js"></script>
 </body>
 
