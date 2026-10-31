@@ -31,15 +31,18 @@ canvas.addEventListener("pointermove", (e) => {
   hovered = hitTest(p.x, p.y);
   canvas.style.cursor = hovered ? "pointer" : "default";
   hint.textContent = hovered ? hovered.label : "";
+  ghostOnCursorMove(p);
 });
 
 canvas.addEventListener("pointerleave", () => {
   hovered = null;
   hint.textContent = "";
+  ghostOnCursorLeave();
 });
 
 canvas.addEventListener("click", (e) => {
   const p = toLogical(e);
+  ghostOnClick(p);
   const obj = hitTest(p.x, p.y);
   if (obj) handleObjectClick(obj.id);
 });
@@ -49,8 +52,12 @@ function handleObjectClick(id) {
   // interactible object logicc
 }
 
-function frame() {
-  drawRoom(ctx, hovered);
+function frame(now) {
+  updateGhost(now);
+  drawRoom(ctx, hovered, now);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// Greet the visitor shortly after load
+setTimeout(ghostGreet, 800);

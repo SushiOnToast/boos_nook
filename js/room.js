@@ -49,7 +49,15 @@ const OBJECTS = [
     h: 22,
     color: "#171326",
   },
-  { id: "bed", label: "my bed :)", x: 16, y: 44, w: 48, h: 32, color: "#D99DB8" },
+  {
+    id: "bed",
+    label: "my bed :)",
+    x: 16,
+    y: 44,
+    w: 48,
+    h: 32,
+    color: "#D99DB8",
+  },
   {
     id: "radio",
     label: "my radio",
@@ -112,11 +120,11 @@ function drawObjects(ctx, hovered) {
   }
 }
 
-function drawRoom(ctx, hovered) {
+function drawRoom(ctx, hovered, now) {
   ctx.clearRect(0, 0, W, H);
   drawTiles(ctx);
   drawObjects(ctx, hovered);
-  // draw ghost here later
+  drawGhost(ctx, now);
 }
 
 // test hit
