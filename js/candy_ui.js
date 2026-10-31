@@ -1,11 +1,10 @@
 // ---- The treats ----
-// color = placeholder until assets/candy/<id>.png exists
+// color = placeholder used only if assets/candy/<id>.png is missing
 // reaction = which ghost state it triggers
 const CANDIES = [
   {
     id: "cherry",
     name: "cherry",
-    color: "#d6224a",
     reaction: "surprised",
     lines: [
       "a cherry?! ...is someone chasing me?",
@@ -16,7 +15,6 @@ const CANDIES = [
   {
     id: "orange",
     name: "orange",
-    color: "#f08a24",
     reaction: "happy",
     lines: [
       "an orange. basically a tiny pumpkin.",
@@ -27,7 +25,6 @@ const CANDIES = [
   {
     id: "booberry_kiss",
     name: "booberry kiss",
-    color: "#c06bd6",
     reaction: "happy",
     lines: [
       "oh. oh my. *blushes*",
@@ -38,7 +35,6 @@ const CANDIES = [
   {
     id: "bat_lolly",
     name: "bat lolly",
-    color: "#5a4a78",
     reaction: "happy",
     lines: [
       "i'm not batman. but i'll take it.",
@@ -49,7 +45,6 @@ const CANDIES = [
   {
     id: "shooting_star",
     name: "shooting star",
-    color: "#fff1a8",
     reaction: "happy",
     lines: [
       "a whole star?! quick, make a wish!",
@@ -60,7 +55,6 @@ const CANDIES = [
   {
     id: "candy_corn",
     name: "candy corn",
-    color: "#f2c14e",
     reaction: "happy",
     lines: [
       "candy corn. ...classic.",
@@ -75,31 +69,18 @@ const COOLDOWN_MS = 60 * 1000; // keep in sync with the SQL trigger interval
 const CANDY_BY_ID = {};
 CANDIES.forEach((c) => {
   CANDY_BY_ID[c.id] = c;
-  c.ready = false;
-  c.img = new Image();
-  c.img.onload = () => {
-    c.ready = true; // real art found: use it instead of the colour block
-    drawPickerSwatches();
-    renderCandyWindow();
-  };
-  c.img.src = `assets/candy/${c.id}.png`; // a 404 here just means "still using placeholders"
+  new Image().src = `assets/candy/${c.id}.png`; // preload so the cards appear instantly
 });
 
-// ---- Drawing one candy (used by the room, the pile and the picker) ----
-function drawCandy(ctx, id, x, y, size) {
+// one candy as an image element
+function candyThumb(id) {
   const c = CANDY_BY_ID[id];
-  ctx.imageSmoothingEnabled = false;
-  if (c && c.ready) {
-    ctx.drawImage(c.img, x, y, size, size);
-    return;
-  }
-  ctx.fillStyle = c ? c.color : "#888";
-  ctx.fillRect(x, y, size, size);
-  ctx.fillStyle = "rgba(255,255,255,0.35)"; // tiny highlight so it reads as an object
-  const h = Math.max(1, Math.floor(size / 4));
-  ctx.fillRect(x + 1, y + 1, h, h);
+  const img = document.createElement("img");
+  img.src = `assets/candy/${id}.png`;
+  img.alt = c ? c.name : "candy";
+  img.className = "thumb";
+  return img;
 }
-
 // ---- State ----
 const basketState = { count: null, latest: [], error: false };
 let candyOpen = false;
@@ -111,17 +92,29 @@ let candyTick = null;
 const candyEl = document.getElementById("candy");
 const candyCountEl = document.getElementById("candy-count");
 const candyLatestEl = document.getElementById("candy-latest");
-const candyPileEl = document.getElementById("candy-pile");
+const candyGalleryEl = document.getElementById("candy-gallery");
 const candyPickerEl = document.getElementById("candy-picker");
 const candyLeaveBtn = document.getElementById("candy-leave");
 const candyStatusEl = document.getElementById("candy-status");
-const pileCtx = candyPileEl.getContext("2d");
+const candyMyNameEl = document.getElementById("candy-myname");
 
 // ---- Helpers ----
 function candyPhrase(id) {
   const c = CANDY_BY_ID[id];
   const n = c ? c.name : "treat";
   return (/^[aeiou]/i.test(n) ? "an " : "a ") + n;
+}
+
+// "sleepy moth", or "someone" for old rows without a name
+function rowName(row) {
+  return row.name_adj && row.name_noun
+    ? `${row.name_adj} ${row.name_noun}`
+    : "someone";
+}
+
+function showMyName() {
+  const n = getVisitorName();
+  candyMyNameEl.textContent = `${n.adj} ${n.noun}`;
 }
 
 function cooldownLeft() {
@@ -152,56 +145,32 @@ async function refreshBasket() {
   renderCandyWindow();
 }
 
-// ---- The pile in the room, drawn on the main canvas (called from drawRoom) ----
-const BASKET_CANDY = 6; // size of each candy in the room, logical px
-const BASKET_SLOTS = [
-  [1, 1],
-  [7, 1],
-  [13, 1],
-  [4, 7],
-  [10, 7],
-  [1, 13],
-  [7, 13],
-  [13, 13],
-];
-function drawBasketCandy(ctx) {
-  const b = OBJECTS.find((o) => o.id === "basket");
-  if (!b) return;
-  const n = Math.min(basketState.latest.length, BASKET_SLOTS.length);
-  for (let i = n - 1; i >= 0; i--) {
-    // oldest first, newest ends up on top
-    const [sx, sy] = BASKET_SLOTS[i];
-    drawCandy(
-      ctx,
-      basketState.latest[i].candy_type,
-      b.x + sx,
-      b.y + sy,
-      BASKET_CANDY,
-    );
+// ---- Rendering ----
+function renderGallery() {
+  candyGalleryEl.replaceChildren();
+  if (!basketState.latest.length) {
+    const empty = document.createElement("div");
+    empty.className = "candy-empty";
+    empty.textContent = "nothing here yet...";
+    candyGalleryEl.appendChild(empty);
+    return;
   }
-}
-
-// ---- The window ----
-function drawPile() {
-  pileCtx.clearRect(0, 0, 128, 40);
-  const COLS = 10,
-    TILE = 12;
-  basketState.latest.slice(0, 30).forEach((row, i) => {
-    drawCandy(
-      pileCtx,
-      row.candy_type,
-      4 + (i % COLS) * TILE,
-      2 + Math.floor(i / COLS) * TILE,
-      10,
-    );
+  const mineIds = new Set(getMyCandyIds());
+  basketState.latest.forEach((row) => {
+    const mine = mineIds.has(row.id);
+    const card = document.createElement("div");
+    card.className = "candy-card" + (mine ? " mine" : "");
+    card.title = `${candyPhrase(row.candy_type)}, ${timeAgo(row.created_at)}`;
+    const label = document.createElement("span");
+    label.textContent = mine ? "you" : rowName(row);
+    card.append(candyThumb(row.candy_type), label);
+    candyGalleryEl.appendChild(card);
   });
 }
 
-function drawPickerSwatches() {
+function renderPicker() {
   candyPickerEl.querySelectorAll(".candy-opt").forEach((btn) => {
-    const ctx = btn.querySelector("canvas").getContext("2d");
-    ctx.clearRect(0, 0, 16, 16);
-    drawCandy(ctx, btn.dataset.candy, 0, 0, 16);
+    btn.querySelector(".slot").replaceChildren(candyThumb(btn.dataset.candy));
   });
 }
 
@@ -239,20 +208,25 @@ function renderCandyWindow() {
   } else {
     candyCountEl.textContent = `${n} piece${n === 1 ? "" : "s"} of candy ${n === 1 ? "has" : "have"} been left here.`;
     const last = basketState.latest[0];
-    candyLatestEl.textContent = last
-      ? `someone left ${candyPhrase(last.candy_type)} ${timeAgo(last.created_at)}.`
-      : "";
+    if (last) {
+      const who = getMyCandyIds().includes(last.id) ? "you" : rowName(last);
+      candyLatestEl.textContent = `${who} left ${candyPhrase(last.candy_type)} ${timeAgo(last.created_at)}.`;
+    } else {
+      candyLatestEl.textContent = "";
+    }
   }
-  drawPile();
+  renderGallery();
   updateLeaveButton();
 }
 
+// ---- Open / close ----
 function openCandy() {
   candyOpen = true;
   ghost.cursor = null;
   selectedCandy = null;
   candyStatusEl.textContent = "";
   markSelected();
+  showMyName();
   renderCandyWindow();
   candyEl.hidden = false;
   clearInterval(candyTick);
@@ -311,12 +285,11 @@ CANDIES.forEach((c) => {
   const btn = document.createElement("button");
   btn.className = "candy-opt";
   btn.dataset.candy = c.id;
-  const cv = document.createElement("canvas");
-  cv.width = 16;
-  cv.height = 16;
+  const slot = document.createElement("div");
+  slot.className = "slot";
   const label = document.createElement("span");
   label.textContent = c.name;
-  btn.append(cv, label);
+  btn.append(slot, label);
   btn.addEventListener("click", () => {
     selectedCandy = c.id;
     candyStatusEl.textContent = "";
@@ -325,8 +298,12 @@ CANDIES.forEach((c) => {
   });
   candyPickerEl.appendChild(btn);
 });
-drawPickerSwatches();
+renderPicker();
 
+document.getElementById("candy-reroll").addEventListener("click", () => {
+  rerollVisitorName();
+  showMyName();
+});
 candyLeaveBtn.addEventListener("click", onLeaveClick);
 document.getElementById("candy-close").addEventListener("click", closeCandy);
 candyEl.addEventListener("click", (e) => {
@@ -346,7 +323,11 @@ subscribeToCandy((row) => {
     !candyOpen &&
     ghost.state === "idle"
   ) {
-    if (Math.random() < 0.6)
-      ghostSay(`ooh, someone left ${candyPhrase(row.candy_type)}!`, 3000);
+    if (Math.random() < 0.6) {
+      ghostSay(
+        `ooh, ${rowName(row)} left ${candyPhrase(row.candy_type)}!`,
+        3000,
+      );
+    }
   }
 });
