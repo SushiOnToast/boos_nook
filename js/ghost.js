@@ -10,19 +10,27 @@ const ghost = {
   stateUntil: 0, // timestamp when a timed state ends
   facing: 1, // -1 left, 1 right
   lookX: 0,
-  lookY: 0, // eye offset (looking towards cursor)
+  lookY: 0, // eye offset (looking towards cursor / direction of travel)
   blinkUntil: 0,
   nextBlink: 2000, // blink timer
   lastInteraction: performance.now(),
-  ignoring: false,  // behaviour ehen busy with ghost things
+  ignoring: false, // behaviour when busy with ghost things
   ignoreUntil: 0,
   nextIgnoreCheck: 5000,
-  speech: "", // bubble text an timing management
+  speech: "", // bubble text and timing management
   speechUntil: 0,
   cursor: null, // x, y coords of cursor INSIDE canvas, null if outside
+
+  // movement
+  moving: false,
+  moveX: 0,
+  moveY: 0, // direction it's travelling (unit vector)
+  nextMove: 3000, // when it's allowed to pick a new destination
+  lastUpdate: 0,
 };
 
 const GHOST_R = 10; // body radius for placeholder drawing
+const GHOST_SPEED = 16; // logical pixels per second (try 10-25)
 
 const LINES = {
   happy: ["hi!!", ":D", "hehe", "oh! hello"],
@@ -50,6 +58,24 @@ function setState(state, durationMs = 0, line = null) {
   if (line) say(line);
 }
 
+// choose somewhere new to float to (at least 50px away, so it never hops on the spot)
+function pickNewTarget() {
+  for (let i = 0; i < 10; i++) {
+    const x = 40 + Math.random() * (W - 80);
+    const y = 50 + Math.random() * (H - 90);
+    if (Math.hypot(x - ghost.x, y - ghost.y) > 50) {
+      ghost.targetX = x;
+      ghost.targetY = y;
+      return;
+    }
+  }
+}
+
+// is a point (logical px) on the ghost? used for the cursor change
+function ghostContains(p) {
+  return Math.hypot(p.x - ghost.x, p.y - ghost.y) < GHOST_R + 6;
+}
+
 // functions below called from main.js, they update state
 
 function ghostGreet() {
@@ -71,8 +97,7 @@ function ghostOnCursorLeave() {
 }
 
 function ghostOnClick(p) {
-  const d = Math.hypot(p.x - ghost.x, p.y - ghost.y);
-  if (d < GHOST_R + 6) {
+  if (ghostContains(p)) {
     ghost.lastInteraction = performance.now();
     setState("happy", 1800, pick(LINES.happy));
   }
@@ -84,6 +109,10 @@ function ghostSay(text, ms) {
 
 // update every frame
 function updateGhost(now) {
+  // seconds since last frame (capped so a tab switch doesn't teleport the ghost)
+  const dt = Math.min((now - (ghost.lastUpdate || now)) / 1000, 0.05);
+  ghost.lastUpdate = now;
+
   // switch state back to idle if current state time has run out
   if (ghost.stateUntil && now > ghost.stateUntil) {
     ghost.state = "idle";
@@ -109,40 +138,67 @@ function updateGhost(now) {
   }
   if (ghost.ignoring && now > ghost.ignoreUntil) ghost.ignoring = false;
 
-  // using lerp to slowly move pupils towards cursor rather than snapping
+  // where is the cursor relative to the ghost? (computed once, used twice below)
+  const c = ghost.cursor;
+  let cdx = 0,
+    cdy = 0,
+    cdist = Infinity;
+  if (c) {
+    cdx = c.x - ghost.x;
+    cdy = c.y - ghost.y;
+    cdist = Math.hypot(cdx, cdy) || 1;
+  }
+
+  // Get excited when the cursor is close
+  if (c && !ghost.ignoring && cdist < 15 && ghost.state === "idle") {
+    setState("happy", 1500, pick(LINES.happy));
+  }
+
+  // movement: constant speed towards the target, only while idle
+  ghost.moving = false;
+  if (ghost.state === "idle") {
+    const mdx = ghost.targetX - ghost.x;
+    const mdy = ghost.targetY - ghost.y;
+    const mdist = Math.hypot(mdx, mdy);
+
+    if (mdist > 1) {
+      const step = Math.min(GHOST_SPEED * dt, mdist); // never overshoot
+      ghost.x += (mdx / mdist) * step;
+      ghost.y += (mdy / mdist) * step;
+      ghost.moving = true;
+      ghost.moveX = mdx / mdist;
+      ghost.moveY = mdy / mdist;
+      if (Math.abs(mdx) > 1) ghost.facing = mdx > 0 ? 1 : -1;
+    } else {
+      // arrived: rest for a bit, then choose somewhere new
+      if (ghost.nextMove === Infinity) {
+        ghost.nextMove = now + 2500 + Math.random() * 4000;
+      }
+      if (now > ghost.nextMove) {
+        pickNewTarget();
+        ghost.nextMove = Infinity; // timer restarts when it arrives
+      }
+    }
+  }
+
+  // where should the eyes point?
+  //   travelling -> look where it's going
+  //   standing still and not ignoring you -> look at the cursor
+  //   otherwise -> look straight ahead
   let tx = 0,
     ty = 0;
-  if (ghost.cursor && !ghost.ignoring && ghost.state !== "sleepy") {
-    const dx = ghost.cursor.x - ghost.x;
-    const dy = ghost.cursor.y - ghost.y;
-    const dist = Math.hypot(dx, dy) || 1;
-    tx = dx / dist; // normalised directions
-    ty = dy / dist;
-    if (Math.abs(dx) > 6) ghost.facing = dx > 0 ? 1 : -1;
-
-    // Get excited when the cursor is close
-    if (dist < 15 && ghost.state === "idle") {
-      setState("happy", 1500, pick(LINES.happy));
+  if (ghost.state !== "sleepy") {
+    if (ghost.moving) {
+      tx = ghost.moveX;
+      ty = ghost.moveY;
+    } else if (c && !ghost.ignoring) {
+      tx = cdx / cdist;
+      ty = cdy / cdist;
     }
   }
-  // actually moving the eyes
-  ghost.lookX += (tx - ghost.lookX) * 0.12; 
+  // lerp so the eyes glide between targets instead of snapping
+  ghost.lookX += (tx - ghost.lookX) * 0.12;
   ghost.lookY += (ty - ghost.lookY) * 0.12;
-
-  // pick new spot to move to every so often
-  if (
-    ghost.state === "idle" &&
-    Math.hypot(ghost.targetX - ghost.x, ghost.targetY - ghost.y) < 2
-  ) {
-    if (Math.random() < 0.004) {
-      ghost.targetX = 40 + Math.random() * (W - 80);
-      ghost.targetY = 50 + Math.random() * (H - 90);
-    }
-  }
-  if (ghost.state === "idle" || ghost.state === "happy") {
-    ghost.x += (ghost.targetX - ghost.x) * 0.01;
-    ghost.y += (ghost.targetY - ghost.y) * 0.01;
-  }
 
   // Clear old speech
   if (ghost.speech && now > ghost.speechUntil) ghost.speech = "";
@@ -236,20 +292,76 @@ function drawGhost(ctx, now) {
     ctx.fillRect(cx + 5, eyeY + 3, 3, 2);
   }
 
-  // Speech bubble
-  if (ghost.speech) drawBubble(ctx, ghost.speech, cx, cy - GHOST_R - 8);
+  // Speech bubble (HTML overlay, so the text is crisp instead of pixelated)
+  updateBubble(cx, cy);
 }
 
-function drawBubble(ctx, text, x, y) {
-  ctx.font = "8px monospace";
-  const w = Math.ceil(ctx.measureText(text).width) + 8;
-  const h = 12;
-  const bx = Math.max(2, Math.min(W - w - 2, Math.round(x - w / 2)));
-  const by = Math.max(2, Math.round(y - h));
-  ctx.fillStyle = "#F4EFFB";
-  ctx.fillRect(bx, by, w, h);
-  ctx.fillRect(Math.round(x) - 1, by + h, 3, 2); // little tail
-  ctx.fillStyle = "#171326";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, bx + 4, by + h / 2 + 0.5);
+// speech bubble
+
+let bubbleEl = null;
+
+function getBubble() {
+  if (bubbleEl) return bubbleEl;
+
+  const style = document.createElement("style");
+    style.textContent = `
+    #ghost-bubble {
+      position: fixed;
+      transform: translate(-50%, -100%);
+      background: #F4EFFB;
+      color: #171326;
+      font-family: "Tiny5", sans-serif;
+      line-height: 1;
+      padding: calc(var(--px) * 2) calc(var(--px) * 4);
+      border-radius: 0;
+      white-space: nowrap;
+      pointer-events: none; /* clicks pass through to the canvas */
+      opacity: 0;
+      z-index: 10;
+    }
+    #ghost-bubble::after { /* square pixel tail */
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 100%;
+      width: calc(var(--px) * 3);
+      height: calc(var(--px) * 2);
+      background: #F4EFFB;
+      transform: translateX(-50%);
+    }
+  `;
+  document.head.appendChild(style);
+
+  bubbleEl = document.createElement("div");
+  bubbleEl.id = "ghost-bubble";
+  document.body.appendChild(bubbleEl);
+  return bubbleEl;
+}
+
+// cx, cy = ghost position in logical (canvas) pixels
+function updateBubble(cx, cy) {
+  const el = getBubble();
+  if (!ghost.speech) {
+    el.style.opacity = 0;
+    return;
+  }
+
+  const roomCanvas = document.getElementById("room");
+  const r = roomCanvas.getBoundingClientRect();
+  const scale = r.width / W; // screen pixels per logical pixel
+
+  if (el.textContent !== ghost.speech) el.textContent = ghost.speech;
+  el.style.setProperty("--px", scale + "px"); 
+  el.style.fontSize = Math.round(scale * 8) + "px";
+  el.style.opacity = 1;
+
+  // convert logical position to screen position, then keep it inside the room
+  const half = el.offsetWidth / 2;
+  let left = r.left + cx * scale;
+  left = Math.max(r.left + half + 4, Math.min(r.right - half - 4, left));
+  let top = r.top + (cy - GHOST_R - 6) * scale;
+  top = Math.max(r.top + el.offsetHeight + 8, top);
+
+  el.style.left = left + "px";
+  el.style.top = top + "px";
 }
